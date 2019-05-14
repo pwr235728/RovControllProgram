@@ -1,11 +1,9 @@
 from PID import PID
 
-speedPID_limit = 100    # maksymalna moc - ograniczenie wyjścia PID od prędkości
-positionPID_limit = 40  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
+
 
 
 class PidParams:
-
     def __init__(self, Kp=0.0, Ki=0.0, Kd=0.0, Limit=0.0):
         self.Kp = Kp
         self.Ki = Ki
@@ -14,7 +12,6 @@ class PidParams:
 
 
 class RovPID:
-
     def __init__(self, outer_loop_params, inner_loop_params, sample_time):
 
         self.SetPoint = 0.0
