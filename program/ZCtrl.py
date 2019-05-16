@@ -48,5 +48,23 @@ class ZCtrl:
         self.__thr_pitch_ZR = tmp
 
     def __depth_control(self):
-        pass
+        self.__thr_depth_ZL = self.Depth
+        self.__thr_depth_ZR = self.Depth
+        self.__thr_depth_ZB = self.Depth
 
+    def update(self):
+        self.__pitch_control()
+        self.__depth_control()
+
+        thrZL = self.__thr_depth_ZL + self.__thr_pitch_ZL
+        thrZR = self.__thr_depth_ZR + self.__thr_pitch_ZR
+        thrZB = self.__thr_depth_ZB + self.__thr_pitch_ZB
+
+        total = math.fabs(thrZL) + math.fabs(thrZR) + math.fabs(thrZB)
+        norm_factor = 1.0
+        if total > 100:
+            norm_factor = 100.0/total
+
+        self.thrusterZL = thrZL
+        self.thrusterZR = thrZR
+        self.thrusterZB = thrZB
