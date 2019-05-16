@@ -3,7 +3,7 @@ import math
 
 
 class XyCtrl:
-    __speedPID_limit = 100  # maksymalna moc - ograniczenie wyjścia PID od prędkości
+    __speedPID_limit = 10  # maksymalna moc - ograniczenie wyjścia PID od prędkości
     __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
 
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
@@ -45,7 +45,7 @@ class XyCtrl:
                              sample_time=self.SampleTime)
 
     def __heading_control(self):
-
+        self.__RovPid.SetPoint = self.Heading
         # oblicza rotacje rova
         tmp = self.__RovPid.update(outer_loop_feadback=self.AHRS.HEADING,
                                  inner_loop_feadback=self.AHRS.YAW_SPEED)
