@@ -9,7 +9,10 @@ class XyCtrl:
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
     __pid_params_in = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
-    def __init__(self, sampleTime):
+    def __init__(self, ahrs, sampleTime):
+        # AHRS
+        self.AHRS = ahrs
+
         # czas wykonania petli sterujacej
         self.SampleTime = sampleTime
 
@@ -41,10 +44,11 @@ class XyCtrl:
                              inner_loop_params=self.__pid_params_in,
                              sample_time=self.SampleTime)
 
-    def __heading_control(self, AHRS):
+    def __heading_control(self):
+
         # oblicza rotacje rova
-        tmp = self.__RovPid.update(outer_loop_feadback=AHRS.YAW_SPEED,
-                                 inner_loop_feadback=AHRS.HEADING)
+        tmp = self.__RovPid.update(outer_loop_feadback=self.AHRS.HEADING,
+                                 inner_loop_feadback=self.AHRS.YAW_SPEED)
 
         self.__A_h = 0.0
         self.__B_h = 0.0
@@ -66,8 +70,8 @@ class XyCtrl:
         self.__A_w = math.cos(self.Direction + math.radians(45))
         self.__C_w = -math.cos(self.Direction + math.radians(45))
 
-    def update(self, AHRS):
-        self.__heading_control(AHRS)
+    def update(self):
+        self.__heading_control()
         self.__direction_control()
 
         # wyliczenie nastaw
