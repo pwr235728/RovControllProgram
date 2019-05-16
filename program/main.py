@@ -1,18 +1,21 @@
 from RovPID import *
 from XyCtrl import *
+from ZCtrl import *
 from AHRS_sim import *
 
 import time
 
 ahrs = AHRS()
+bar02 = "bar02"
 
 SampleTime = 0.01
 
 xyCtrl = XyCtrl(ahrs=ahrs, sampleTime=SampleTime)
-
 xyCtrl.Heading = 0   # kierunek "patrzenia" rova
 xyCtrl.Direction = 0    # płyń do przodu
 xyCtrl.Power = 100   # 30% macoy silnikow
+
+ZCtrl = ZCtrl(ahrs=ahrs, bar02=bar02, sampleTime=SampleTime)
 
 
 while True:
