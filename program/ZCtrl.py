@@ -7,7 +7,7 @@ class ZCtrl:
     __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
 
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
-    __pid_params_in = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
+    __pid_params_in = PidParams(Kp=4.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
     def __init__(self, ahrs, bar02, sampleTime):
         self.ahrs = ahrs
@@ -25,7 +25,10 @@ class ZCtrl:
         self.__pitch_pid = RovPID(outer_loop_params=self.__pid_params_out,
                                  inner_loop_params=self.__pid_params_in,
                                  sample_time=self.__sample_time)
-
+        # regulator glebokosci
+        self.__depth_pid = RovPID(outer_loop_params=self.__pid_params_out,
+                                 inner_loop_params=self.__pid_params_in,
+                                 sample_time=self.__sample_time)
         # sterowania DEPTH
         self.__depth_ZL = 0.0
         self.__depth_ZR = 0.0
@@ -50,6 +53,7 @@ class ZCtrl:
     @depth.setter
     def depth(self, depth):
         self.__depth = depth
+        self.__depth_pid.SetPoint = depth
 
     @property
     def pitch(self):
@@ -82,9 +86,12 @@ class ZCtrl:
         self.__pitch_ZR = tmp
 
     def __depth_controll(self):
-        self.__depth_ZL = self.__depth
-        self.__depth_ZR = self.__depth
-        self.__depth_ZB = self.__depth
+        tmp = self.__depth_pid.update(outer_loop_feadback=self.bar02.DEPTH,
+                                      inner_loop_feadback=self.bar02.DEPTH_SPEED)
+
+        self.__depth_ZL = tmp
+        self.__depth_ZR = tmp
+        self.__depth_ZB = tmp
 
     def update(self):
         self.__pitch_controll()
