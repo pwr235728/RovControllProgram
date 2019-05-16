@@ -3,7 +3,7 @@ import math
 
 
 class XyCtrl:
-    __speedPID_limit = 10  # maksymalna moc - ograniczenie wyjścia PID od prędkości
+    __speedPID_limit = 100  # maksymalna moc - ograniczenie wyjścia PID od prędkości
     __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
 
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
@@ -81,7 +81,7 @@ class XyCtrl:
         thrD = self.__D_w * self.Power + self.__D_h
 
         # normalizacja do 100% mocy (wiadomo, nie da sie kręcić szybciej silnikiem niż maksymalna predkość)
-        total = thrA + thrB + thrC + thrD
+        total = math.fabs(thrA) + math.fabs(thrB) + math.fabs(thrC) + math.fabs(thrD)
         norm_factor = 1.0
         if total > 100:
             norm_factor = 100.0/total
