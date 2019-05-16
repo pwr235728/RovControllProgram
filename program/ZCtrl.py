@@ -82,9 +82,9 @@ class ZCtrl:
         self.__pitch_ZR = tmp
 
     def __depth_controll(self):
-        self.__depth_ZL = self.Depth
-        self.__depth_ZR = self.Depth
-        self.__depth_ZB = self.Depth
+        self.__depth_ZL = self.__depth
+        self.__depth_ZR = self.__depth
+        self.__depth_ZB = self.__depth
 
     def update(self):
         self.__pitch_controll()

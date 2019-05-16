@@ -7,7 +7,7 @@ class XyCtrl:
     __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
 
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
-    __pid_params_in = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
+    __pid_params_in = PidParams(Kp=3.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
     def __init__(self, ahrs, sampleTime):
         # AHRS
@@ -42,7 +42,7 @@ class XyCtrl:
         # regulator obrotu
         self.__heading_pid = RovPID(outer_loop_params=self.__pid_params_out,
                                     inner_loop_params=self.__pid_params_in,
-                                    sample_time=self.SampleTime)
+                                    sample_time=self.__sample_time)
 
     @property
     def sample_time(self):
@@ -104,10 +104,10 @@ class XyCtrl:
         self.__direction_control()
 
         # wyliczenie nastaw
-        thrA = self.__A_w * self.Power + self.__A_h
-        thrB = self.__B_w * self.Power + self.__B_h
-        thrC = self.__C_w * self.Power + self.__C_h
-        thrD = self.__D_w * self.Power + self.__D_h
+        thrA = self.__A_w * self.__power + self.__A_h
+        thrB = self.__B_w * self.__power + self.__B_h
+        thrC = self.__C_w * self.__power + self.__C_h
+        thrD = self.__D_w * self.__power + self.__D_h
 
         # normalizacja do 100% mocy
         total = math.fabs(thrA) + math.fabs(thrB) + math.fabs(thrC) + math.fabs(thrD)
