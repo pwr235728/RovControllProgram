@@ -41,8 +41,8 @@ class XyCtrl:
 
         # regulator obrotu
         self.__RovPid = RovPID(outer_loop_params=self.__pid_params_out,
-                             inner_loop_params=self.__pid_params_in,
-                             sample_time=self.SampleTime)
+                               inner_loop_params=self.__pid_params_in,
+                               sample_time=self.SampleTime)
 
     def __heading_control(self):
         self.__RovPid.SetPoint = self.Heading
