@@ -9,7 +9,7 @@ class XyCtrl:
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
     __pid_params_in = PidParams(Kp=3.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
-    __max_current_consumtion_per_thruster = 20.0    # 20A 100% thrust
+    __max_current_consumption_per_thruster = 20.0    # 20A 100% thrust
 
     def __init__(self, ahrs, sampleTime):
         # AHRS
@@ -110,7 +110,7 @@ class XyCtrl:
         self.__C_w = -math.cos(self.__direction + math.radians(45))
 
     def __get_current(self, value):
-        return self.__max_current_consumtion_per_thruster * abs(value) / 100.0
+        return self.__max_current_consumption_per_thruster * abs(value) / 100.0
 
     def update(self):
         self.__heading_control()

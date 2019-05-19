@@ -9,6 +9,8 @@ class ZCtrl:
     __pid_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
     __pid_params_in = PidParams(Kp=4.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
+    __max_current_consumption = 20.0  # 20A 100% ciagu
+
     def __init__(self, ahrs, bar02, sampleTime):
         self.ahrs = ahrs
         self.bar02 = bar02
@@ -16,6 +18,7 @@ class ZCtrl:
         self.__sample_time = sampleTime
         self.__depth = 0.0
         self.__pitch = 0.0
+        self.__power_limit = 10.0  # 10A lacznie na silniki ?
 
         self.__thruster_ZL = 0.0
         self.__thruster_ZR = 0.0
@@ -92,6 +95,10 @@ class ZCtrl:
         self.__depth_ZL = tmp
         self.__depth_ZR = tmp
         self.__depth_ZB = tmp
+
+    def __get_current(self, value):
+        return self.__max_current_consumption_per_thruster * abs(value) / 100.0
+
 
     def update(self):
         self.__pitch_controll()
