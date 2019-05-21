@@ -44,24 +44,24 @@ class ahrs_logger:
     __current_time = time.time()
 
     def __log_heading(self, ahrs):
-        self.HEADING.append(ahrs.HEADING)
-        self.YAW_SPEED.append(ahrs.YAW_SPEED)
+        self.HEADING.append(ahrs.yaw)
+        self.YAW_SPEED.append(ahrs.rate_of_turn[2])
 
         if len(self.HEADING) > self.length:
             self.HEADING.pop(0)
             self.YAW_SPEED.pop(0)
 
     def __log_pitch(self, ahrs):
-        self.PITCH.append(ahrs.PITCH)
-        self.PITCH_SPEED.append(ahrs.PITCH_SPEED)
+        self.PITCH.append(ahrs.pitch)
+        self.PITCH_SPEED.append(ahrs.rate_of_turn[1])
 
         if len(self.PITCH) > self.length:
             self.PITCH.pop(0)
             self.PITCH_SPEED.pop(0)
 
-    def __log_depth(self, ahrs):
-        self.DEPTH .append(ahrs.DEPTH )
-        self.DEPTH_SPEED.append(ahrs.DEPTH_SPEED)
+    def __log_depth(self, bar02):
+        self.DEPTH .append(bar02.DEPTH)
+        self.DEPTH_SPEED.append(bar02.DEPTH_SPEED)
 
         if len(self.DEPTH ) > self.length:
             self.DEPTH .pop(0)
@@ -99,10 +99,10 @@ class Plotter:
         self.pitch_ax.plot(ahrs_logger.PITCH_SPEED, label='pitch speed')
         self.pitch_ax.legend(loc='best')
 
-    def __plot_depth(self, ahrs_logger):
+    def __plot_depth(self, bar02):
         self.depth_ax.clear()
-        self.depth_ax.plot(ahrs_logger.DEPTH, label='depth')
-        self.depth_ax.plot(ahrs_logger.DEPTH_SPEED, label='depth speed')
+        self.depth_ax.plot(bar02.DEPTH, label='depth')
+        self.depth_ax.plot(bar02.DEPTH_SPEED, label='depth speed')
         self.depth_ax.legend(loc='best')
 
     def plot(self, ahrs_logger):

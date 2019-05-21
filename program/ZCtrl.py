@@ -3,13 +3,27 @@ import math
 
 class ZCtrl:
 
-    __speedPID_limit = 100  # maksymalna moc - ograniczenie wyjścia PID od prędkości
-    __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
+    # regulator pochylenia
+    __pitch_speedPID_limit = 100.0  # maksymalna moc - ograniczenie wyjścia PID od prędkości
+    __pitch_positionPID_limit = 40.0  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
+    __pid_pitch_params_out = PidParams(Kp=2.0, Ki=0.0, Kd=0.0, Limit=__pitch_positionPID_limit)
+    __pid_pitch_params_in = PidParams(Kp=4.0, Ki=0.0, Kd=0.0, Limit=__pitch_speedPID_limit)
 
-    __pid_params_out = PidParams(Kp=2.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
-    __pid_params_in = PidParams(Kp=4.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
-    __max_current_consumption = 20.0  # 20A 100% ciagu
+    # regulator głębokości
+    __depth_speedPID_limit = 100.0      # maksymalna moc - ograniczenie wyjścia PID od prędkości
+    __depth_positionPID_limit = 1.0     # maksymalna prędkość zanurzania - ograniczenie wyjścia PID od pozycji
+    __pid_depth_params_out = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__depth_positionPID_limit)
+    __pid_depth_params_in = PidParams(Kp=1.0, Ki=0.0, Kd=0.0, Limit=__depth_speedPID_limit)
+
+    # maksymalny możliwy prąd pobierany przez jeden silnik
+    __max_current_consumption_per_thruster = 20.0  # 20A 100% ciagu
+
+
+    # wartości zwracane - nastawy silników które trzeba ustawić <-100, 100> [%]
+    thruster_ZL = 0.0
+    thruster_ZR = 0.0
+    thruster_ZB = 0.0
 
     def __init__(self, ahrs, bar02, sampleTime):
         self.ahrs = ahrs
@@ -25,12 +39,12 @@ class ZCtrl:
         self.__thruster_ZB = 0.0
 
         # regulator pochylenia
-        self.__pitch_pid = RovPID(outer_loop_params=self.__pid_params_out,
-                                 inner_loop_params=self.__pid_params_in,
+        self.__pitch_pid = RovPID(outer_loop_params=self.__pid_pitch_params_out,
+                                 inner_loop_params=self.__pid_pitch_params_in,
                                  sample_time=self.__sample_time)
         # regulator glebokosci
-        self.__depth_pid = RovPID(outer_loop_params=self.__pid_params_out,
-                                 inner_loop_params=self.__pid_params_in,
+        self.__depth_pid = RovPID(outer_loop_params=self.__pid_depth_params_out,
+                                 inner_loop_params=self.__pid_depth_params_in,
                                  sample_time=self.__sample_time)
         # sterowania DEPTH
         self.__depth_ZL = 0.0
@@ -66,39 +80,29 @@ class ZCtrl:
         self.__pitch = pitch
         self.__pitch_pid.SetPoint = pitch
 
-    @property
-    def thruster_ZL(self):
-        return self.__thruster_ZL
-
-    @property
-    def thruster_ZR(self):
-        return self.__thruster_ZR
-
-    @property
-    def thruster_ZB(self):
-        return self.__thruster_ZB
-
     def __pitch_controll(self):
+        ahrs_data = self.ahrs.get_data()
 
         # oblicza rotacje pochylenia rova
-        tmp = self.__pitch_pid.update(outer_loop_feadback=self.ahrs.PITCH,
-                                     inner_loop_feadback=self.ahrs.PITCH_SPEED)
+        pid_pitch_output = self.__pitch_pid.update(
+            outer_loop_feadback=ahrs_data['pitch'],
+            inner_loop_feadback=ahrs_data['angularA_y'])
 
-        self.__pitch_ZB = -tmp
-        self.__pitch_ZL = tmp
-        self.__pitch_ZR = tmp
+        self.__pitch_ZB = -pid_pitch_output
+        self.__pitch_ZL = pid_pitch_output
+        self.__pitch_ZR = pid_pitch_output
 
     def __depth_controll(self):
-        tmp = self.__depth_pid.update(outer_loop_feadback=self.bar02.DEPTH,
-                                      inner_loop_feadback=self.bar02.DEPTH_SPEED)
+        pid_depth_output = self.__depth_pid.update(
+            outer_loop_feadback=self.bar02.DEPTH,
+            inner_loop_feadback=self.bar02.DEPTH_SPEED)
 
-        self.__depth_ZL = tmp
-        self.__depth_ZR = tmp
-        self.__depth_ZB = tmp
+        self.__depth_ZL = pid_depth_output
+        self.__depth_ZR = pid_depth_output
+        self.__depth_ZB = pid_depth_output
 
     def __get_current(self, value):
         return self.__max_current_consumption_per_thruster * abs(value) / 100.0
-
 
     def update(self):
         self.__pitch_controll()
@@ -110,11 +114,18 @@ class ZCtrl:
         thrZB = self.__depth_ZB + self.__pitch_ZB
 
         # normalizacja do 100% mocy
-        total = math.fabs(thrZL) + math.fabs(thrZR) + math.fabs(thrZB)
-        norm_factor = 1.0
-        if total > 100:
-            norm_factor = 100.0/total
+        max_thr = max(abs(thrZL), abs(thrZR), abs(thrZB))
+        if max_thr > 100.0:
+            thrZL = thrZL * 100.0/max_thr
+            thrZR = thrZR * 100.0/max_thr
+            thrZB = thrZB * 100.0/max_thr
 
-        self.__thruster_ZL = thrZL
-        self.__thruster_ZR = thrZR
-        self.__thruster_ZB = thrZB
+        # ograniczenie mocy
+        total = (self.__get_current(thrZL) + self.__get_current(thrZR) + self.__get_current(thrZB))
+        norm_factor = 1.0
+        if total > self.__power_limit:
+            norm_factor = self.__power_limit/total
+
+        self.thruster_ZL = thrZL * norm_factor
+        self.thruster_ZR = thrZR * norm_factor
+        self.thruster_ZB = thrZB * norm_factor

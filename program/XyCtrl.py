@@ -1,15 +1,24 @@
 from RovPID import *
+from ahrs_sim import *
 import math
 
 
 class XyCtrl:
-    __speedPID_limit = 100  # maksymalna moc - ograniczenie wyjścia PID od prędkości
-    __positionPID_limit = 90  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
 
+    # regulator obracania łodzi
+    __speedPID_limit = 100.0  # maksymalna moc - ograniczenie wyjścia PID od prędkości
+    __positionPID_limit = 45.0  # maksymalna prędkość - ograniczenie wyjścia PID od pozycji
     __pid_params_out = PidParams(Kp=2.0, Ki=0.0, Kd=0.0, Limit=__positionPID_limit)
     __pid_params_in = PidParams(Kp=3.0, Ki=0.0, Kd=0.0, Limit=__speedPID_limit)
 
+    # maksymalny możliwy prąd pobierany przez jeden silnik
     __max_current_consumption_per_thruster = 20.0    # 20A 100% thrust
+
+    # wartości zwracane - nastawy silników które trzeba ustawić <-100, 100> [%]
+    thruster_A = 0.0
+    thruster_B = 0.0
+    thruster_C = 0.0
+    thruster_D = 0.0
 
     def __init__(self, ahrs, sampleTime):
         # AHRS
@@ -86,21 +95,25 @@ class XyCtrl:
 
     def __heading_control(self):
         # oblicza rotacje rova
-        tmp = self.__heading_pid.update(outer_loop_feadback=self.ahrs.HEADING,
-                                 inner_loop_feadback=self.ahrs.YAW_SPEED)
+
+        ahrs_data = self.ahrs.get_data()
+
+        pid_output = self.__heading_pid.update(
+            outer_loop_feadback=ahrs_data['yaw'],
+            inner_loop_feadback=ahrs_data['angularA_z'])
 
         self.__A_h = 0.0
         self.__B_h = 0.0
         self.__C_h = 0.0
         self.__D_h = 0.0
 
-        if tmp > 0.0:
-            self.__B_h = tmp
-            self.__D_h = tmp
+        if pid_output > 0.0:
+            self.__B_h = pid_output
+            self.__D_h = pid_output
 
-        if tmp < 0.0:
-            self.__A_h = -tmp
-            self.__C_h = -tmp
+        if pid_output < 0.0:
+            self.__A_h = -pid_output
+            self.__C_h = -pid_output
 
     def __direction_control(self):
         self.__B_w = math.cos(self.__direction - math.radians(45))
@@ -139,7 +152,7 @@ class XyCtrl:
             norm_factor = self.__power_limit/total
 
         # aktualizacja nastaw silnikow
-        self.thrusterA = thrA * norm_factor
-        self.thrusterB = thrB * norm_factor
-        self.thrusterC = thrC * norm_factor
-        self.thrusterD = thrD * norm_factor
+        self.thruster_A = thrA * norm_factor
+        self.thruster_B = thrB * norm_factor
+        self.thruster_C = thrC * norm_factor
+        self.thruster_D = thrD * norm_factor
