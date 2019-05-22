@@ -23,12 +23,23 @@ class RovSim:
 
         self.move_speed = 0.0
 
+    def set_engines(self, dict):
+        self.thrusters = dict
+
 
     def update(self):
-        rot = self.thrB + self.thrD - self.thrA - self.thrC
-        tr = self.thrB + self.thrA - self.thrD - self.thrC
-        pitch = -self.thrZB + self.thrZL + self.thrZR
-        depth = self.thrZB + self.thrZR + self.thrZL
+        rot = self.thrusters["fl"] + self.thrusters["br"] - self.thrusters["fr"] - self.thrusters["bl"]
+        tr = self.thrusters["fl"] + self.thrusters["fr"] - self.thrusters["br"] - self.thrusters["bl"]
+
+        rot = rot*100
+        tr = tr*100
+
+        pitch = -self.thrusters["vb"] + self.thrusters["vl"]+ self.thrusters["vr"]
+        depth = self.thrusters["vb"] + self.thrusters["vr"] + self.thrusters["vl"]
+
+        pitch = pitch*100
+        depth = depth*100
+
 
         self.heading_speed = self.heading_speed  + rot*self.sample_time
         self.heading = self.heading + self.heading_speed*self.sample_time
@@ -39,4 +50,4 @@ class RovSim:
         self.depth_speed = self.depth_speed + depth*self.sample_time
         self.depth = self.depth +self.depth_speed*self.sample_time
 
-        self.move_speed = self.move_speed*self.P + tr*self.Q
+        self.move_speed = self.move_speed*self.P + tr*self.sample_time

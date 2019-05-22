@@ -43,14 +43,6 @@ def sim():
     zCtrl.depth = 0
 
 
-    engines_values = translate_thrusters(
-        xyCtrl.thruster_A,
-        xyCtrl.thruster_B,
-        xyCtrl.thruster_C,
-        xyCtrl.thruster_D,
-        zCtrl.thruster_ZL,
-        zCtrl.thruster_ZR,
-        zCtrl.thruster_ZB)
 
 
 
@@ -74,14 +66,16 @@ def sim():
         xyCtrl.update()
         zCtrl.update()
 
-        rov_sim.thrA = xyCtrl.thruster_A
-        rov_sim.thrB = xyCtrl.thruster_B
-        rov_sim.thrC = xyCtrl.thruster_C
-        rov_sim.thrD = xyCtrl.thruster_D
+        engines_values = translate_thrusters(
+            xyCtrl.thruster_A,
+            xyCtrl.thruster_B,
+            xyCtrl.thruster_C,
+            xyCtrl.thruster_D,
+            zCtrl.thruster_ZL,
+            zCtrl.thruster_ZR,
+            zCtrl.thruster_ZB)
 
-        rov_sim.thrZL = zCtrl.thruster_ZL
-        rov_sim.thrZR = zCtrl.thruster_ZR
-        rov_sim.thrZB = zCtrl.thruster_ZB
+        rov_sim.set_engines(engines_values)
 
         rov_sim.update()
 
